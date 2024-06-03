@@ -32,6 +32,9 @@ jobs:
         sdkmanager "ndk;${NDK_VERSION}"
     - name: Build app
       run: ./gradlew assembleOssRelease
+      env:
+        ANDROID_SIGN_STORE_PASSWORD: ${{ secrets.ANDROID_SIGN_STORE_PASSWORD }}
+        ANDROID_SIGN_KEY_PASSWORD: ${{ secrets.ANDROID_SIGN_KEY_PASSWORD }}
     - name: Upload APK (arm)
       uses: actions/upload-artifact@v4
       with:
