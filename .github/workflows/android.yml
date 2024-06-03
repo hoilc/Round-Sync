@@ -35,29 +35,8 @@ jobs:
       env:
         ANDROID_SIGN_STORE_PASSWORD: ${{ secrets.ANDROID_SIGN_STORE_PASSWORD }}
         ANDROID_SIGN_KEY_PASSWORD: ${{ secrets.ANDROID_SIGN_KEY_PASSWORD }}
-    - name: Upload APK (arm)
+    - name: Upload Output
       uses: actions/upload-artifact@v4
       with:
-        name: nightly-armeabi.apk
-        path: app/build/outputs/apk/oss/debug/roundsync_v*?(-beta)-oss-armeabi-v7a-debug.apk
-    - name: Upload APK (arm64)
-      uses: actions/upload-artifact@v4
-      with:
-        name: nightly-arm64.apk
-        path: app/build/outputs/apk/oss/debug/roundsync_v*?(-beta)-oss-arm64-v8a-debug.apk
-    - name: Upload APK (x86)
-      uses: actions/upload-artifact@v4
-      with:
-        name: nightly-x86.apk
-        path: app/build/outputs/apk/oss/debug/roundsync_v*?(-beta)-oss-x86-debug.apk
-    - name: Upload APK (arm)
-      uses: actions/upload-artifact@v4
-      with:
-        name: nightly-x64.apk
-        path: app/build/outputs/apk/oss/debug/roundsync_v*?(-beta)-oss-x86_64-debug.apk
-    - name: Upload APK (universal)
-      uses: actions/upload-artifact@v4
-      with:
-        name: nightly-universal.apk
-        path: app/build/outputs/apk/oss/debug/roundsync_v*?(-beta)-oss-universal-debug.apk
-        retention-days: 14
+        name: outputs
+        path: app/build/outputs/
