@@ -159,9 +159,12 @@ public class TasksRecyclerViewAdapter extends RecyclerView.Adapter<TasksRecycler
                     isRunning = true;
                     String content = info.getProgress().getString(SyncWorker.PROGRESS_CONTENT);
                     String detail = info.getProgress().getString(SyncWorker.PROGRESS_DETAIL);
-                    if (content != null && !content.isEmpty()) {
+                    if (detail != null && !detail.isEmpty()) {
                         holder.taskStatus.setVisibility(View.VISIBLE);
-                        holder.taskStatus.setText(detail != null && !detail.isEmpty() ? content + "\n" + detail : content);
+                        holder.taskStatus.setText(detail);
+                    } else if (content != null && !content.isEmpty()) {
+                        holder.taskStatus.setVisibility(View.VISIBLE);
+                        holder.taskStatus.setText(content);
                     } else {
                         holder.taskStatus.setVisibility(View.VISIBLE);
                         holder.taskStatus.setText(R.string.operation_start_sync);
