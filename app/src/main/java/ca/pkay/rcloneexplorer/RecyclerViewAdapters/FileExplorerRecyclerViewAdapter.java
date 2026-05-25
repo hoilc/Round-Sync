@@ -318,6 +318,19 @@ public class FileExplorerRecyclerViewAdapter extends RecyclerView.Adapter<FileEx
             notifyItemRemoved(index);
         }
 
+        Map<FileItem, FileItem> newDataMap = new HashMap<>();
+        for (FileItem item : data) {
+            newDataMap.put(item, item);
+        }
+        for (int i = 0; i < files.size(); i++) {
+            FileItem oldItem = files.get(i);
+            FileItem newItem = newDataMap.get(oldItem);
+            if (newItem != null && oldItem != newItem) {
+                files.set(i, newItem);
+                notifyItemChanged(i);
+            }
+        }
+
         Map<FileItem, Integer> newIndexMap = new HashMap<>();
         for (int i = 0; i < data.size(); i++) {
             newIndexMap.put(data.get(i), i);
