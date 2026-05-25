@@ -102,6 +102,13 @@ public class Rclone {
 
         if(loggingEnabled) {
             command.add("-vvv");
+            boolean logHeaders = PreferenceManager
+                    .getDefaultSharedPreferences(context)
+                    .getBoolean(context.getString(R.string.pref_key_log_headers), false);
+            if(logHeaders) {
+                command.add("--dump");
+                command.add("headers,auth");
+            }
         }
 
         command.addAll(Arrays.asList(args));
@@ -147,6 +154,13 @@ public class Rclone {
 
         if(loggingEnabled) {
             command.add("-vvv");
+            boolean logHeaders = PreferenceManager
+                    .getDefaultSharedPreferences(context)
+                    .getBoolean(context.getString(R.string.pref_key_log_headers), false);
+            if(logHeaders) {
+                command.add("--dump");
+                command.add("headers,auth");
+            }
         }
 
         command.addAll(args);

@@ -9,6 +9,15 @@
             android:key="@string/pref_key_logs"
             android:title="@string/use_logs"
             app:summary="@string/use_logs_summary" />
+
+        <SwitchPreference
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:defaultValue="false"
+            android:dependency="@string/pref_key_logs"
+            android:key="@string/pref_key_log_headers"
+            android:title="@string/use_log_headers"
+            app:summary="@string/use_log_headers_summary" />
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/preference_category_header_rclone">

@@ -127,10 +127,13 @@ public class RcloneRcd {
                     "--rc-pass", rcPass,
                     "--rc-serve"));
             if (pref.getBoolean(context.getString(R.string.pref_key_logs), false)) {
-                parameters.addAll(Arrays.asList(
-                        "--log-file", logFile,
-                        "--dump", "headers",
-                        "-vvv"));
+                parameters.add("--log-file");
+                parameters.add(logFile);
+                parameters.add("-vvv");
+                if (pref.getBoolean(context.getString(R.string.pref_key_log_headers), false)) {
+                    parameters.add("--dump");
+                    parameters.add("headers");
+                }
             }
             parameters.add("rcd");
             rcd = Runtime.getRuntime().exec(parameters.toArray(new String[0]), getEnv());

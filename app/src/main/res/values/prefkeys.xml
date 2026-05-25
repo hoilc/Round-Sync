@@ -1,5 +1,6 @@
 <resources>
     <string name="pref_key_logs" translatable="false">pref_key_logs</string>
+    <string name="pref_key_log_headers" translatable="false">pref_key_log_headers</string>
     <string name="pref_key_theme_old" translatable="false">pref_key_theme_mode</string>
     <string name="pref_key_theme" translatable="false">pref_key_theme</string>
     <string name="pref_key_wrap_filenames" translatable="false">pref_key_wrap_filenames</string>
