@@ -529,6 +529,7 @@ class DynamicRemoteConfigFragment(private val mProviderTitle: String, private va
         if(mIsEditTask) {
             RemoteConfigHelper.updateAndWait(context, options)
             requireActivity().finish()
+            return
         }
 
         if(mUseOauth){

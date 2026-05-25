@@ -514,7 +514,10 @@ public class Rclone {
 
     @Nullable
     public Process configUpdate(List<String> options) {
-        return configCreate(options);
+        // When editing, passwords from config dump are already obscured.
+        // Use --no-obscure to prevent double-obscuring them.
+        options.add("--no-obscure");
+        return config("create", options);
     }
     
     public Process config(String task, List<String> options) {
