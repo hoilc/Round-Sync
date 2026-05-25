@@ -61,6 +61,9 @@ import io.github.x0b.safdav.file.SafConstants;
 public class Rclone {
 
     private static final String TAG = "Rclone";
+    private static final long REMOTES_CACHE_TTL_MS = 10_000;
+    private static List<RemoteItem> sCachedRemotes;
+    private static long sCacheTimestamp = 0;
     public static final int SYNC_DIRECTION_LOCAL_TO_REMOTE = 1;
     public static final int SYNC_DIRECTION_REMOTE_TO_LOCAL = 2;
     public static final int SERVE_PROTOCOL_HTTP = 1;
@@ -342,7 +345,17 @@ public class Rclone {
         return fileItemList;
     }
 
+    public static void invalidateRemotesCache() {
+        sCachedRemotes = null;
+        sCacheTimestamp = 0;
+    }
+
     public List<RemoteItem> getRemotes() {
+        long now = System.currentTimeMillis();
+        if (sCachedRemotes != null && (now - sCacheTimestamp) < REMOTES_CACHE_TTL_MS) {
+            return new ArrayList<>(sCachedRemotes);
+        }
+
         String[] command = createCommand("config", "dump");
         StringBuilder output = new StringBuilder();
         Process process = null;
@@ -416,6 +429,8 @@ public class Rclone {
             }
         }
 
+        sCachedRemotes = new ArrayList<>(remoteItemList);
+        sCacheTimestamp = System.currentTimeMillis();
         return remoteItemList;
     }
 
@@ -505,6 +520,7 @@ public class Rclone {
 
     @Nullable
     public Process configCreate(List<String> options) {
+        invalidateRemotesCache();
         // https://rclone.org/commands/rclone_config_create/
         // See the NB-comment why we need to pass --obscure.
         // Otherwise long passwords fail.
@@ -585,6 +601,7 @@ public class Rclone {
     }
 
     public void deleteRemote(String remoteName) {
+        invalidateRemotesCache();
         String[] command = createCommandWithOptions("config", "delete", remoteName);
         Process process;
 
@@ -1370,6 +1387,7 @@ public class Rclone {
     }
 
     public boolean copyConfigFileFromZip(Uri uri) throws Exception {
+        invalidateRemotesCache();
         String appsFileDir = context.getFilesDir().getPath();
 
         File tempFile = new File(appsFileDir, "rclone.conf-tmp");
@@ -1395,6 +1413,7 @@ public class Rclone {
      * @throws IOException
      */
     public boolean copyConfigFile(Uri uri) throws IOException {
+        invalidateRemotesCache();
         String appsFileDir = context.getFilesDir().getPath();
         InputStream inputStream;
         // The exact cause of the NPE is unknown, but the effect is the same
