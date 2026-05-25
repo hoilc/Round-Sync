@@ -325,7 +325,7 @@ public class FileExplorerRecyclerViewAdapter extends RecyclerView.Adapter<FileEx
         for (int i = 0; i < files.size(); i++) {
             FileItem oldItem = files.get(i);
             FileItem newItem = newDataMap.get(oldItem);
-            if (newItem != null && oldItem != newItem) {
+            if (newItem != null && !oldItem.contentEquals(newItem)) {
                 files.set(i, newItem);
                 notifyItemChanged(i);
             }

@@ -167,6 +167,12 @@ public class FileItem implements Parcelable {
         return result;
     }
 
+    public boolean contentEquals(FileItem other) {
+        if (other == null) return false;
+        return size == other.size && modTime == other.modTime
+                && isDir == other.isDir && (mimeType == null ? other.mimeType == null : mimeType.equals(other.mimeType));
+    }
+
     @Override
     public int describeContents() {
         return 0;
