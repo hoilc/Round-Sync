@@ -495,7 +495,6 @@ public class FileExplorerRecyclerViewAdapter extends RecyclerView.Adapter<FileEx
             holder.view.setBackgroundColor(Color.TRANSPARENT);
             if (selectedItems.size() == 0) {
                 isInSelectMode = false;
-                listener.onFileDeselected();
             }
             listener.onFileDeselected();
         } else {
@@ -541,4 +540,3 @@ public class FileExplorerRecyclerViewAdapter extends RecyclerView.Adapter<FileEx
         }
     }
 }
-
