@@ -183,15 +183,12 @@ class SyncWorker (private var mContext: Context, workerParams: WorkerParameters)
                     val line = iterator.next()
                     try {
                         val logline = JSONObject(line)
-                        //todo: migrate this to StatusObject, so that we can handle everything properly.
                         if (logline.getString("level") == "error") {
                             if (sIsLoggingEnabled) {
                                 log2File?.log(line)
                             }
-                            statusObject.parseLoglineToStatusObject(logline)
-                        } else if (logline.getString("level") == "warning") {
-                            statusObject.parseLoglineToStatusObject(logline)
                         }
+                        statusObject.parseLoglineToStatusObject(logline)
 
                         updateForegroundNotification(mNotificationManager.updateSyncNotification(
                             title,
