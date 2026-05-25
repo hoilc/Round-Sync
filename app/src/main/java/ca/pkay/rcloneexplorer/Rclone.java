@@ -351,6 +351,25 @@ public class Rclone {
         sCacheTimestamp = 0;
     }
 
+    private static RemoteItem copyRemoteItem(RemoteItem remoteItem) {
+        Parcel parcel = Parcel.obtain();
+        try {
+            remoteItem.writeToParcel(parcel, 0);
+            parcel.setDataPosition(0);
+            return RemoteItem.CREATOR.createFromParcel(parcel);
+        } finally {
+            parcel.recycle();
+        }
+    }
+
+    private static List<RemoteItem> copyRemoteItems(List<RemoteItem> remoteItems) {
+        List<RemoteItem> result = new ArrayList<>();
+        for (RemoteItem remoteItem : remoteItems) {
+            result.add(copyRemoteItem(remoteItem));
+        }
+        return result;
+    }
+
     public List<RemoteItem> getRemotes() {
         long now = System.currentTimeMillis();
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
@@ -358,16 +377,10 @@ public class Rclone {
         Set<String> favoriteRemotes = sharedPreferences.getStringSet(context.getString(R.string.shared_preferences_drawer_pinned_remotes), new HashSet<>());
 
         if (sCachedRemotes != null && (now - sCacheTimestamp) < REMOTES_CACHE_TTL_MS) {
-            List<RemoteItem> result = new ArrayList<>();
-            for (RemoteItem cached : sCachedRemotes) {
-                Parcel parcel = Parcel.obtain();
-                cached.writeToParcel(parcel, 0);
-                parcel.setDataPosition(0);
-                RemoteItem item = RemoteItem.CREATOR.createFromParcel(parcel);
-                parcel.recycle();
+            List<RemoteItem> result = copyRemoteItems(sCachedRemotes);
+            for (RemoteItem item : result) {
                 item.pin(pinnedRemotes.contains(item.getName()));
                 item.setDrawerPinned(favoriteRemotes.contains(item.getName()));
-                result.add(item);
             }
             return result;
         }
@@ -442,7 +455,7 @@ public class Rclone {
             }
         }
 
-        sCachedRemotes = new ArrayList<>(remoteItemList);
+        sCachedRemotes = copyRemoteItems(remoteItemList);
         sCacheTimestamp = System.currentTimeMillis();
         return remoteItemList;
     }
