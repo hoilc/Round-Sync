@@ -432,6 +432,7 @@ public class FileExplorerRecyclerViewAdapter extends RecyclerView.Adapter<FileEx
     }
 
     private void onLongClickAction(FileItem item, ViewHolder holder) {
+        boolean wasInSelectMode = isInSelectMode;
         if (selectedItems.contains(item)) {
             selectedItems.remove(item);
             holder.view.setBackgroundColor(Color.TRANSPARENT);
@@ -446,7 +447,14 @@ public class FileExplorerRecyclerViewAdapter extends RecyclerView.Adapter<FileEx
             holder.view.setBackgroundColor(getSelectionBackgroundColor());
             listener.onFilesSelected();
         }
-        notifyDataSetChanged();
+        if (wasInSelectMode != isInSelectMode) {
+            notifyDataSetChanged();
+        } else {
+            int position = holder.getBindingAdapterPosition();
+            if (position != RecyclerView.NO_POSITION) {
+                notifyItemChanged(position);
+            }
+        }
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
