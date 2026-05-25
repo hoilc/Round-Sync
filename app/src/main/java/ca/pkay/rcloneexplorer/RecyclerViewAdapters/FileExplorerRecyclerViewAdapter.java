@@ -301,6 +301,22 @@ public class FileExplorerRecyclerViewAdapter extends RecyclerView.Adapter<FileEx
         Set<FileItem> newSet = new HashSet<>(data);
         Set<FileItem> oldSet = new HashSet<>(files);
 
+        boolean identityChanged = !newSet.equals(oldSet);
+        boolean orderChanged = false;
+        if (!identityChanged) {
+            for (int i = 0; i < data.size() && i < files.size(); i++) {
+                if (!data.get(i).equals(files.get(i))) {
+                    orderChanged = true;
+                    break;
+                }
+            }
+        }
+
+        if (orderChanged) {
+            newData(data);
+            return;
+        }
+
         List<FileItem> toRemove = new ArrayList<>();
         for (FileItem item : files) {
             if (!newSet.contains(item)) {
