@@ -348,8 +348,8 @@
     <string name="sync_notification_errors">错误: %d</string>
     <string name="sync_notification_deletions">删除: %d</string>
     <string name="sync_notification_file_syncing">当前文件: %14s</string>
-    <string name="sync_notification_file_checking">已检查: %14s</string>
-    <string name="sync_notification_elapsed">已运行: %14s</string>
+    <string name="sync_notification_file_checking">已检查: %s</string>
+    <string name="sync_notification_elapsed">已运行: %s</string>
     <plurals name="modern_prettyprint_duration_d">
         <item quantity="one">%s 天</item>
         <item quantity="other">%s 天</item>
