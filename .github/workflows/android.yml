@@ -37,7 +37,7 @@ jobs:
         mkdir -p app/.config/android
         echo "${{ secrets.ANDROID_SIGN_KEYSTORE_BASE64 }}" | base64 -d > app/.config/android/roundsync.keystore
         if [ -z "${{ github.ref_type }}" ] || [ "${{ github.ref_type }}" != "tag" ]; then
-          echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
+          export SHORT_SHA="$(git rev-parse --short HEAD)"
         fi
         ./gradlew assembleOssDebug
       env:
