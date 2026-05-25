@@ -144,7 +144,7 @@ class StatusObject(var mContext: Context){
                 mContext.getString(R.string.sync_notification_short),
                 size,
                 allsize,
-                prettyPrintDuration(mStats.optInt("eta", 0))
+                speed
             )
             notificationBigText.clear()
             notificationBigText.add(

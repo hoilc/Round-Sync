@@ -364,7 +364,7 @@
         <item quantity="other">%s 秒</item>
     </plurals>
 
-    <string name="sync_notification_short">%s 共 %s ，剩余 %s</string>
+    <string name="sync_notification_short">%s/%s, %s</string>
     <string name="abi_not_supported_arm_downgrade">不幸的是，此 Round Sync 版本与您的设备不兼容。试试 armeabi-v7a 的 APK， 从 github.com/newhinton/Round-Sync/releases/latest 下载。</string>
     <string name="abi_not_supported">您的设备不支持此版本的 Round Sync。</string>
     <string name="trigger">触发器</string>
