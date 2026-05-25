@@ -29,8 +29,10 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.work.WorkInfo;
+import androidx.work.WorkQuery;
 import androidx.work.WorkManager;
 
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -176,8 +178,12 @@ public class TasksRecyclerViewAdapter extends RecyclerView.Adapter<TasksRecycler
                 }
             }
         };
+        WorkQuery workQuery = WorkQuery.Builder
+                .fromStates(Arrays.asList(WorkInfo.State.ENQUEUED, WorkInfo.State.RUNNING))
+                .addTags(Arrays.asList(String.valueOf(selectedTask.getId())))
+                .build();
         LiveData<List<WorkInfo>> liveData = WorkManager.getInstance(context)
-                .getWorkInfosByTagLiveData(String.valueOf(selectedTask.getId()));
+                .getWorkInfosLiveData(workQuery);
         activeObservers.put(selectedTask.getId(), new ObserverEntry(liveData, observer));
         liveData.observe(lifecycleOwner, observer);
 
