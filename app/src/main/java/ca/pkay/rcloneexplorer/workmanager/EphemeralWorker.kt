@@ -12,6 +12,7 @@ import android.os.Parcel
 import androidx.annotation.StringRes
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.PreferenceManager
+import androidx.work.Data
 import androidx.work.ForegroundInfo
 import androidx.work.Worker
 import androidx.work.WorkerParameters
@@ -228,6 +229,18 @@ class EphemeralWorker (private var mContext: Context, workerParams: WorkerParame
                             statusObject.notificationPercent,
                             ongoingNotificationID
                         ))
+
+                        if (statusObject.notificationContent.isNotEmpty()) {
+                            try {
+                                setProgressAsync(Data.Builder()
+                                    .putString(SyncWorker.PROGRESS_CONTENT, statusObject.notificationContent)
+                                    .putString(SyncWorker.PROGRESS_DETAIL, statusObject.notificationBigText.joinToString("\n"))
+                                    .putInt(SyncWorker.PROGRESS_PERCENT, statusObject.notificationPercent)
+                                    .build())
+                            } catch (e: IllegalStateException) {
+                                FLog.e(tag(), "Progress data too large, skipping update", e)
+                            }
+                        }
                     } catch (e: JSONException) {
                         Log.e(tag(), "Error: the offending line: $line")
                         //FLog.e(TAG, "onHandleIntent: error reading json", e)

@@ -5,6 +5,11 @@
         android:icon="@drawable/ic_cloud_download_black_24dp"
         android:title="@string/start_task" />
     <item
+        android:id="@+id/action_cancel_task"
+        android:icon="@drawable/ic_cancel"
+        android:title="@string/cancel_task"
+        android:visible="false" />
+    <item
         android:id="@+id/action_edit_task"
         android:icon="@drawable/ic_edit_black"
         android:title="@string/edit" />

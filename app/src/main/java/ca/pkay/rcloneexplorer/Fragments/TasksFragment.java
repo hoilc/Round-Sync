@@ -45,7 +45,6 @@ public class TasksFragment extends Fragment {
 
         View view = inflater.inflate(R.layout.fragment_tasks, container, false);
         fragmentView = view;
-        populateTaskList(fragmentView);
         updateVisibilities(fragmentView);
 
         Intent intent = new Intent(view.getContext(), TaskActivity.class);
@@ -93,6 +92,7 @@ public class TasksFragment extends Fragment {
         recyclerView.setItemAnimator(new LandingAnimator());
 
         TasksRecyclerViewAdapter recyclerViewAdapter = new TasksRecyclerViewAdapter(dbHandler.getAllTasks(), c);
+        recyclerViewAdapter.setLifecycleOwner(getViewLifecycleOwner());
         recyclerView.setAdapter(recyclerViewAdapter);
         recyclerView.addOnChildAttachStateChangeListener(new RecyclerView.OnChildAttachStateChangeListener() {
             @Override public void onChildViewAttachedToWindow(final View view) { updateVisibilities(fragmentView); }

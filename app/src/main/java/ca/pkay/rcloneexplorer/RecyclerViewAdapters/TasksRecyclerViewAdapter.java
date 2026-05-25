@@ -24,10 +24,17 @@ import androidx.appcompat.widget.PopupMenu;
 import androidx.core.content.pm.ShortcutInfoCompat;
 import androidx.core.content.pm.ShortcutManagerCompat;
 import androidx.core.graphics.drawable.IconCompat;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.Observer;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.work.WorkInfo;
+import androidx.work.WorkManager;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import ca.pkay.rcloneexplorer.Activities.ShortcutServiceActivity;
 import ca.pkay.rcloneexplorer.Activities.TaskActivity;
@@ -37,6 +44,7 @@ import ca.pkay.rcloneexplorer.Items.SyncDirectionObject;
 import ca.pkay.rcloneexplorer.Items.Task;
 import ca.pkay.rcloneexplorer.R;
 import ca.pkay.rcloneexplorer.workmanager.SyncManager;
+import ca.pkay.rcloneexplorer.workmanager.SyncWorker;
 import es.dmoral.toasty.Toasty;
 
 public class TasksRecyclerViewAdapter extends RecyclerView.Adapter<TasksRecyclerViewAdapter.ViewHolder>{
@@ -46,11 +54,25 @@ public class TasksRecyclerViewAdapter extends RecyclerView.Adapter<TasksRecycler
     private List<Task> tasks;
     private View view;
     private final Context context;
-
+    private LifecycleOwner lifecycleOwner;
+    private final Map<Long, Boolean> runningStateCache = new HashMap<>();
+    private static class ObserverEntry {
+        final LiveData<List<WorkInfo>> liveData;
+        final Observer<List<WorkInfo>> observer;
+        ObserverEntry(LiveData<List<WorkInfo>> liveData, Observer<List<WorkInfo>> observer) {
+            this.liveData = liveData;
+            this.observer = observer;
+        }
+    }
+    private final Map<Long, ObserverEntry> activeObservers = new HashMap<>();
 
     public TasksRecyclerViewAdapter(List<Task> tasks, Context context) {
         this.tasks = tasks;
         this.context = context;
+    }
+
+    public void setLifecycleOwner(LifecycleOwner owner) {
+        this.lifecycleOwner = owner;
     }
 
     @NonNull
@@ -66,6 +88,9 @@ public class TasksRecyclerViewAdapter extends RecyclerView.Adapter<TasksRecycler
         String remoteName = selectedTask.getTitle();
 
         holder.taskName.setText(remoteName);
+
+        removeObserver(holder.taskId);
+        holder.taskId = selectedTask.getId();
 
         RemoteItem remote = new RemoteItem(selectedTask.getRemoteId(), String.valueOf(selectedTask.getRemoteType()));
 
@@ -118,6 +143,66 @@ public class TasksRecyclerViewAdapter extends RecyclerView.Adapter<TasksRecycler
             showFileMenu(v, selectedTask);
         });
 
+        Observer<List<WorkInfo>> observer = workInfos -> {
+            if (holder.taskId != selectedTask.getId()) {
+                return;
+            }
+            boolean isRunning = false;
+            boolean isEnqueued = false;
+            for (WorkInfo info : workInfos) {
+                if (info.getState() == WorkInfo.State.RUNNING) {
+                    isRunning = true;
+                    String content = info.getProgress().getString(SyncWorker.PROGRESS_CONTENT);
+                    String detail = info.getProgress().getString(SyncWorker.PROGRESS_DETAIL);
+                    if (content != null && !content.isEmpty()) {
+                        holder.taskStatus.setVisibility(View.VISIBLE);
+                        holder.taskStatus.setText(detail != null && !detail.isEmpty() ? content + "\n" + detail : content);
+                    } else {
+                        holder.taskStatus.setVisibility(View.VISIBLE);
+                        holder.taskStatus.setText(R.string.operation_start_sync);
+                    }
+                    break;
+                } else if (info.getState() == WorkInfo.State.ENQUEUED) {
+                    isEnqueued = true;
+                }
+            }
+            runningStateCache.put(selectedTask.getId(), isRunning || isEnqueued);
+            if (!isRunning) {
+                if (isEnqueued) {
+                    holder.taskStatus.setVisibility(View.VISIBLE);
+                    holder.taskStatus.setText(R.string.loading);
+                } else {
+                    holder.taskStatus.setVisibility(View.GONE);
+                }
+            }
+        };
+        LiveData<List<WorkInfo>> liveData = WorkManager.getInstance(context)
+                .getWorkInfosByTagLiveData(String.valueOf(selectedTask.getId()));
+        activeObservers.put(selectedTask.getId(), new ObserverEntry(liveData, observer));
+        liveData.observe(lifecycleOwner, observer);
+
+        Boolean cached = runningStateCache.get(selectedTask.getId());
+        if (cached != null && cached) {
+            holder.taskStatus.setVisibility(View.VISIBLE);
+            holder.taskStatus.setText(R.string.operation_start_sync);
+        } else {
+            holder.taskStatus.setVisibility(View.GONE);
+        }
+    }
+
+    @Override
+    public void onViewRecycled(@NonNull ViewHolder holder) {
+        super.onViewRecycled(holder);
+        removeObserver(holder.taskId);
+        holder.taskStatus.setVisibility(View.GONE);
+        holder.taskStatus.setText("");
+    }
+
+    private void removeObserver(long taskId) {
+        ObserverEntry entry = activeObservers.remove(taskId);
+        if (entry != null) {
+            entry.liveData.removeObserver(entry.observer);
+        }
     }
 
     public void addTask(Task data) {
@@ -133,6 +218,11 @@ public class TasksRecyclerViewAdapter extends RecyclerView.Adapter<TasksRecycler
     private void startTask(Task task){
         SyncManager sm = new SyncManager(context);
         sm.queue(task);
+    }
+
+    private void cancelTask(Task task){
+        SyncManager sm = new SyncManager(context);
+        sm.cancel(String.valueOf(task.getId()));
     }
 
     private void editTask(Task task) {
@@ -167,10 +257,23 @@ public class TasksRecyclerViewAdapter extends RecyclerView.Adapter<TasksRecycler
     private void showFileMenu(View view, final Task task) {
         PopupMenu popupMenu = new PopupMenu(context, view);
         popupMenu.getMenuInflater().inflate(R.menu.task_item_menu, popupMenu.getMenu());
+
+        Boolean isRunning = runningStateCache.get(task.getId());
+        if (isRunning != null && isRunning) {
+            popupMenu.getMenu().findItem(R.id.action_start_task).setVisible(false);
+            popupMenu.getMenu().findItem(R.id.action_cancel_task).setVisible(true);
+        } else {
+            popupMenu.getMenu().findItem(R.id.action_start_task).setVisible(true);
+            popupMenu.getMenu().findItem(R.id.action_cancel_task).setVisible(false);
+        }
+
         popupMenu.setOnMenuItemClickListener(item -> {
             switch (item.getItemId()) {
                 case R.id.action_start_task:
                     startTask(task);
+                    break;
+                case R.id.action_cancel_task:
+                    cancelTask(task);
                     break;
                 case R.id.action_edit_task:
                     editTask(task);
@@ -216,6 +319,8 @@ public class TasksRecyclerViewAdapter extends RecyclerView.Adapter<TasksRecycler
         final TextView fromPath;
         final ImageButton fileOptions;
         final TextView taskSyncDirection;
+        final TextView taskStatus;
+        long taskId;
 
         ViewHolder(View itemView) {
             super(itemView);
@@ -230,6 +335,7 @@ public class TasksRecyclerViewAdapter extends RecyclerView.Adapter<TasksRecycler
             this.fromPath = view.findViewById(R.id.fromPath);
             this.taskSyncDirection = view.findViewById(R.id.task_sync_direction);
             this.fileOptions = view.findViewById(R.id.file_options);
+            this.taskStatus = view.findViewById(R.id.task_status);
         }
     }
 

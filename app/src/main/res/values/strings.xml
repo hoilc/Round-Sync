@@ -42,6 +42,7 @@
     <string name="remote_icon">Remote Icon</string>
     <string name="new_folder">New Folder</string>
     <string name="cancel">Cancel</string>
+    <string name="cancel_task">Cancel task</string>
     <string name="select">Select</string>
     <string name="app_icon">App Icon</string>
     <string name="github_app_url" translatable="false">https://github.com/newhinton/Round-Sync</string>

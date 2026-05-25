@@ -10,6 +10,7 @@ import android.net.wifi.WifiManager
 import androidx.annotation.StringRes
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.PreferenceManager
+import androidx.work.Data
 import androidx.work.ForegroundInfo
 import androidx.work.Worker
 import androidx.work.WorkerParameters
@@ -41,6 +42,9 @@ class SyncWorker (private var mContext: Context, workerParams: WorkerParameters)
     companion object {
         const val TASK_ID = "TASK_ID"
         const val TASK_EPHEMERAL = "TASK_EPHEMERAL"
+        const val PROGRESS_CONTENT = "PROGRESS_CONTENT"
+        const val PROGRESS_DETAIL = "PROGRESS_DETAIL"
+        const val PROGRESS_PERCENT = "PROGRESS_PERCENT"
         private const val TAG = "SyncWorker"
 
         //those Extras do not follow the above schema, because they are exposed to external applications
@@ -198,6 +202,18 @@ class SyncWorker (private var mContext: Context, workerParams: WorkerParameters)
                             statusObject.notificationPercent,
                             ongoingNotificationID
                         ))
+
+                        if (statusObject.notificationContent.isNotEmpty()) {
+                            try {
+                                setProgressAsync(Data.Builder()
+                                    .putString(PROGRESS_CONTENT, statusObject.notificationContent)
+                                    .putString(PROGRESS_DETAIL, statusObject.notificationBigText.joinToString("\n"))
+                                    .putInt(PROGRESS_PERCENT, statusObject.notificationPercent)
+                                    .build())
+                            } catch (e: IllegalStateException) {
+                                FLog.e(TAG, "Progress data too large, skipping update", e)
+                            }
+                        }
                     } catch (e: JSONException) {
                         FLog.e(TAG, "SyncService-Error: the offending line: $line")
                         //FLog.e(TAG, "onHandleIntent: error reading json", e)
