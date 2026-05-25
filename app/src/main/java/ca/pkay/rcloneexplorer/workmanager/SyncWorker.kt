@@ -122,6 +122,7 @@ class SyncWorker (private var mContext: Context, workerParams: WorkerParameters)
 
         if (ephemeralTask != null) {
             mTask = ephemeralTask
+            try { Thread.sleep(5000) } catch (_: InterruptedException) {}
             handleTask()
             postSync()
         } else {
