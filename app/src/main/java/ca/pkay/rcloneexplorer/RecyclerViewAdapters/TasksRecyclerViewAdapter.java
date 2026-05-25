@@ -37,6 +37,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import ca.pkay.rcloneexplorer.Activities.ShortcutServiceActivity;
 import ca.pkay.rcloneexplorer.Activities.TaskActivity;
@@ -52,6 +54,7 @@ import es.dmoral.toasty.Toasty;
 public class TasksRecyclerViewAdapter extends RecyclerView.Adapter<TasksRecyclerViewAdapter.ViewHolder>{
 
     private static final String clipboardID = "rclone_explorer_task_id";
+    private static final ExecutorService WORK_MANAGER_EXECUTOR = Executors.newSingleThreadExecutor();
 
     private List<Task> tasks;
     private View view;
@@ -222,13 +225,17 @@ public class TasksRecyclerViewAdapter extends RecyclerView.Adapter<TasksRecycler
     }
 
     private void startTask(Task task){
-        SyncManager sm = new SyncManager(context);
-        sm.queue(task);
+        WORK_MANAGER_EXECUTOR.execute(() -> {
+            SyncManager sm = new SyncManager(context.getApplicationContext());
+            sm.queue(task);
+        });
     }
 
     private void cancelTask(Task task){
-        SyncManager sm = new SyncManager(context);
-        sm.cancel(String.valueOf(task.getId()));
+        WORK_MANAGER_EXECUTOR.execute(() -> {
+            SyncManager sm = new SyncManager(context.getApplicationContext());
+            sm.cancel(String.valueOf(task.getId()));
+        });
     }
 
     private void editTask(Task task) {
