@@ -150,7 +150,7 @@
     <string name="operation_failed_no_connection">无法同步 %1$s，因为网络不可用</string>
     <string name="operation_failed_data_change">无法同步 %1$s，因为您的设备上禁用了移动数据同步</string>
     <string name="operation_failed_unknown_rclone_error">由于未知的 Rclone 错误，无法同步 %1$s</string>
-    <string name="operation_failed_cancelled">%1$s 被取消</string>
+    <string name="operation_failed_cancelled">同步已取消</string>
     <string name="operation_failed_notask">没有任务可以开始！</string>
     <string name="moving_service">移动服务</string>
     <string name="delete_service">删除服务</string>
