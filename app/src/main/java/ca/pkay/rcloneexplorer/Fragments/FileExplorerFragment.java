@@ -131,6 +131,8 @@ public class FileExplorerFragment extends Fragment implements   FileExplorerRecy
     private final String SAVED_SYNC_DIRECTION = "ca.pkay.rcexplorer.FILE_EXPLORER_FRAG_SYNC_DIRECTION";
     private final String SAVED_SYNC_REMOTE_PATH = "ca.pkay.rcexplorer.FILE_EXPLORER_FRAG_SYNC_REMOTE_PATH";
     private String originalToolbarTitle;
+    private final Handler searchHandler = new Handler();
+    private Runnable searchRunnable;
     private Stack<String> pathStack;
     private Map<String, Integer> directoryPosition;
     private DirectoryObject directoryObject;
@@ -848,9 +850,6 @@ public class FileExplorerFragment extends Fragment implements   FileExplorerRecy
         view.findViewById(R.id.new_folder).setOnClickListener(v -> onCreateNewDirectory());
 
         ((EditText)searchBar.findViewById(R.id.search_field)).addTextChangedListener(new TextWatcher() {
-            private final Handler searchHandler = new Handler();
-            private Runnable searchRunnable;
-
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
             }
@@ -1099,6 +1098,15 @@ public class FileExplorerFragment extends Fragment implements   FileExplorerRecy
         super.onAttach(context);
         this.context = context;
         isRunning = true;
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (searchRunnable != null) {
+            searchHandler.removeCallbacks(searchRunnable);
+            searchRunnable = null;
+        }
     }
 
     @Override
