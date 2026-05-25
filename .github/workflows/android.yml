@@ -34,22 +34,18 @@ jobs:
         NDK_VERSION="$(grep -E "^de\.felixnuesse\.extract\.ndkVersion=" gradle.properties | cut -d'=' -f2)"
         sdkmanager "ndk;${NDK_VERSION}"
     - name: Build app
-      run: ./gradlew assembleOssDebug
-    - name: Upload APK (arm)
-      uses: actions/upload-artifact@v4
-      with:
-        name: nightly-armeabi.apk
-        path: ${{ github.workspace }}/app/build/outputs/apk/oss/debug/*-oss-armeabi-v7a-debug.apk
+      run: |
+        mkdir -p app/.config/android
+        echo "${{ secrets.ANDROID_SIGN_KEYSTORE_BASE64 }}" | base64 -d > app/.config/android/roundsync.keystore
+        ./gradlew assembleOssDebug
+      env:
+        ANDROID_SIGN_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_SIGN_KEYSTORE_PASSWORD }}
+        ANDROID_SIGN_KEY_PASSWORD: ${{ secrets.ANDROID_SIGN_KEY_PASSWORD }}
     - name: Upload APK (arm64)
       uses: actions/upload-artifact@v4
       with:
         name: nightly-arm64.apk
         path: ${{ github.workspace }}/app/build/outputs/apk/oss/debug/*-oss-arm64-v8a-debug.apk
-    - name: Upload APK (x86)
-      uses: actions/upload-artifact@v4
-      with:
-        name: nightly-x86.apk
-        path: ${{ github.workspace }}/app/build/outputs/apk/oss/debug/*-oss-x86-debug.apk
     - name: Upload APK (x64)
       uses: actions/upload-artifact@v4
       with:
@@ -67,7 +63,5 @@ jobs:
       with:
         generate_release_notes: true
         files: |
-          app/build/outputs/apk/oss/debug/*-oss-armeabi-v7a-debug.apk
           app/build/outputs/apk/oss/debug/*-oss-arm64-v8a-debug.apk
-          app/build/outputs/apk/oss/debug/*-oss-x86-debug.apk
           app/build/outputs/apk/oss/debug/*-oss-x86_64-debug.apk

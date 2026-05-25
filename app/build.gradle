@@ -7,6 +7,8 @@ android {
         release {
             keyAlias 'fdroid'
             storeFile file('.config/android/roundsync.keystore')
+            storePassword System.getenv('ANDROID_SIGN_KEYSTORE_PASSWORD')
+            keyPassword System.getenv('ANDROID_SIGN_KEY_PASSWORD')
         }
     }
     ndkVersion project.properties['de.felixnuesse.extract.ndkVersion']
@@ -39,6 +41,7 @@ android {
         debug {
             minifyEnabled false
             shrinkResources false
+            signingConfig signingConfigs.release
             manifestPlaceholders = [
                     appIcon: "@mipmap/ic_launcher_debug",
                     appIconRound: "@mipmap/ic_launcher_debug_round"
