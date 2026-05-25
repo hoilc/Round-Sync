@@ -23,7 +23,11 @@ import com.bumptech.glide.request.RequestOptions;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import ca.pkay.rcloneexplorer.Items.FileItem;
 import ca.pkay.rcloneexplorer.Items.RemoteItem;
@@ -293,11 +297,17 @@ public class FileExplorerRecyclerViewAdapter extends RecyclerView.Adapter<FileEx
             return;
         }
         showEmptyState(false);
-        List<FileItem> newData = new ArrayList<>(data);
-        List<FileItem> diff = new ArrayList<>(files);
 
-        diff.removeAll(newData);
-        for (FileItem fileItem : diff) {
+        Set<FileItem> newSet = new HashSet<>(data);
+        Set<FileItem> oldSet = new HashSet<>(files);
+
+        List<FileItem> toRemove = new ArrayList<>();
+        for (FileItem item : files) {
+            if (!newSet.contains(item)) {
+                toRemove.add(item);
+            }
+        }
+        for (FileItem fileItem : toRemove) {
             int index = files.indexOf(fileItem);
             files.remove(index);
             if (selectedItems.contains(fileItem)) {
@@ -308,10 +318,19 @@ public class FileExplorerRecyclerViewAdapter extends RecyclerView.Adapter<FileEx
             notifyItemRemoved(index);
         }
 
-        diff = new ArrayList<>(data);
-        diff.removeAll(files);
-        for (FileItem fileItem : diff) {
-            int index = newData.indexOf(fileItem);
+        Map<FileItem, Integer> newIndexMap = new HashMap<>();
+        for (int i = 0; i < data.size(); i++) {
+            newIndexMap.put(data.get(i), i);
+        }
+        Set<FileItem> currentSet = new HashSet<>(files);
+        List<FileItem> toAdd = new ArrayList<>();
+        for (FileItem item : data) {
+            if (!currentSet.contains(item)) {
+                toAdd.add(item);
+            }
+        }
+        for (FileItem fileItem : toAdd) {
+            int index = newIndexMap.get(fileItem);
             files.add(index, fileItem);
             notifyItemInserted(index);
         }
