@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.os.Parcel;
 import android.webkit.MimeTypeMap;
 import android.widget.Toast;
 
@@ -352,17 +353,29 @@ public class Rclone {
 
     public List<RemoteItem> getRemotes() {
         long now = System.currentTimeMillis();
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+        Set<String> pinnedRemotes = sharedPreferences.getStringSet(context.getString(R.string.shared_preferences_pinned_remotes), new HashSet<>());
+        Set<String> favoriteRemotes = sharedPreferences.getStringSet(context.getString(R.string.shared_preferences_drawer_pinned_remotes), new HashSet<>());
+
         if (sCachedRemotes != null && (now - sCacheTimestamp) < REMOTES_CACHE_TTL_MS) {
-            return new ArrayList<>(sCachedRemotes);
+            List<RemoteItem> result = new ArrayList<>();
+            for (RemoteItem cached : sCachedRemotes) {
+                Parcel parcel = Parcel.obtain();
+                cached.writeToParcel(parcel, 0);
+                parcel.setDataPosition(0);
+                RemoteItem item = RemoteItem.CREATOR.createFromParcel(parcel);
+                parcel.recycle();
+                item.pin(pinnedRemotes.contains(item.getName()));
+                item.setDrawerPinned(favoriteRemotes.contains(item.getName()));
+                result.add(item);
+            }
+            return result;
         }
 
         String[] command = createCommand("config", "dump");
         StringBuilder output = new StringBuilder();
         Process process = null;
         JSONObject remotesJSON;
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
-        Set<String> pinnedRemotes = sharedPreferences.getStringSet(context.getString(R.string.shared_preferences_pinned_remotes), new HashSet<>());
-        Set<String> favoriteRemotes = sharedPreferences.getStringSet(context.getString(R.string.shared_preferences_drawer_pinned_remotes), new HashSet<>());
 
         try {
             process = getRuntimeProcess(command);
