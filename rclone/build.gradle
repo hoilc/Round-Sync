@@ -3,8 +3,6 @@
 //
 // Supported Android targets:
 //  - arm-v8a (64 bit arm)
-//  - arm-v7a (32 bit arm7)
-//  - x86 (32 bit)
 //  - x64 (64 bit)
 //
 // Supported host systems:
@@ -110,9 +108,7 @@ def getCrossCompiler(abi) {
     }
 
     def abiToCompiler = [
-        'armeabi-v7a': "armv7a-linux-androideabi${NDK_TOOLCHAIN_VERSION}-clang",
         'arm64-v8a': "aarch64-linux-android${NDK_TOOLCHAIN_VERSION}-clang",
-        'x86': "i686-linux-android${NDK_TOOLCHAIN_VERSION}-clang",
         'x86_64': "x86_64-linux-android${NDK_TOOLCHAIN_VERSION}-clang",
     ]
 
@@ -133,9 +129,7 @@ def getOutputPath(abi) {
 
 def buildRclone(abi) {
     def abiToEnv = [
-        'armeabi-v7a': ['GOARCH': 'arm', 'GOARM': '7'],
         'arm64-v8a': ['GOARCH': 'arm64'],
-        'x86': ['GOARCH': '386'],
         'x86_64': ['GOARCH': 'amd64'],
     ]
 
@@ -200,16 +194,8 @@ task checkoutRclone(type: Exec, dependsOn: createRcloneModule) {
     commandLine 'go', 'get', '-v', '-d', "${RCLONE_MODULE}@v${RCLONE_VERSION}"
 }
 
-task buildArm(dependsOn: checkoutRclone) {
-    configure buildRclone('armeabi-v7a')
-}
-
 task buildArm64(dependsOn: checkoutRclone) {
     configure buildRclone('arm64-v8a')
-}
-
-task buildx86(dependsOn: checkoutRclone) {
-    configure buildRclone('x86')
 }
 
 task buildx64(dependsOn: checkoutRclone) {
@@ -217,7 +203,7 @@ task buildx64(dependsOn: checkoutRclone) {
 }
 
 task buildAll {
-    dependsOn buildArm, buildArm64, buildx86, buildx64
+    dependsOn buildArm64, buildx64
 }
 
 task clean {
