@@ -147,6 +147,22 @@
     <string name="use_logs_summary">Error logs will be saved to a local file at (Android/data/de.felixnuesse.extract/files/logs)</string>
     <string name="use_log_headers">Log HTTP headers</string>
     <string name="use_log_headers_summary">Include HTTP headers (including authentication) in the log output. This may expose sensitive information such as passwords and tokens.</string>
+    <string name="pref_stats_interval_title">Stats update interval</string>
+    <string name="pref_stats_interval_summary">How often the sync notification updates. Lower values increase CPU usage.</string>
+    <string-array name="pref_stats_interval_entries" translatable="false">
+        <item>1 second</item>
+        <item>2 seconds</item>
+        <item>5 seconds</item>
+        <item>10 seconds</item>
+        <item>30 seconds</item>
+    </string-array>
+    <string-array name="pref_stats_interval_values" translatable="false">
+        <item>1s</item>
+        <item>2s</item>
+        <item>5s</item>
+        <item>10s</item>
+        <item>30s</item>
+    </string-array>
     <string name="notifications_pref_title">Notifications</string>
     <string name="open_notification_settings_title">More notification settings</string>
     <string name="open_notification_settings_summary">Open the settings to further change how we notify you!</string>

@@ -596,6 +596,12 @@ public class Rclone {
         }
     }
 
+    private String getStatsInterval() {
+        return PreferenceManager
+                .getDefaultSharedPreferences(context)
+                .getString(context.getString(R.string.pref_key_stats_interval), "1s");
+    }
+
     public String obscure(String pass) {
         String[] command = createCommand("obscure", pass);
 
@@ -705,7 +711,7 @@ public class Rclone {
         String localRemotePath = (remoteItem.isRemoteType(RemoteItem.LOCAL)) ? getLocalRemotePathPrefix(remoteItem, context)  + "/" : "";
         String remoteSection = (remotePath.compareTo("//" + remoteName) == 0) ? remoteName + ":" + localRemotePath : remoteName + ":" + localRemotePath + remotePath;
 
-        ArrayList<String> defaultParameter = new ArrayList<>(Arrays.asList("--transfers", "1", "--stats=1s", "--stats-log-level", "NOTICE", "--use-json-log"));
+        ArrayList<String> defaultParameter = new ArrayList<>(Arrays.asList("--transfers", "1", "--stats=" + getStatsInterval(), "--stats-log-level", "NOTICE", "--use-json-log"));
         ArrayList<String> directionParameter = new ArrayList<>();
 
         if(useMD5Sum){
@@ -768,7 +774,7 @@ public class Rclone {
 
         localFilePath = encodePath(localFilePath);
 
-        command = createCommandWithOptions("copy", remoteFilePath, localFilePath, "--transfers", "1", "--stats=1s", "--stats-log-level", "NOTICE", "--use-json-log");
+        command = createCommandWithOptions("copy", remoteFilePath, localFilePath, "--transfers", "1", "--stats=" + getStatsInterval(), "--stats-log-level", "NOTICE", "--use-json-log");
 
         String[] env = getRcloneEnv();
         try {
@@ -800,7 +806,7 @@ public class Rclone {
             path = (uploadPath.compareTo("//" + remoteName) == 0) ? remoteName + ":" + localRemotePath : remoteName + ":" + localRemotePath + uploadPath;
         }
 
-        command = createCommandWithOptions("copy", uploadFile, path, "--transfers", "1", "--stats=1s", "--stats-log-level", "NOTICE", "--use-json-log");
+        command = createCommandWithOptions("copy", uploadFile, path, "--transfers", "1", "--stats=" + getStatsInterval(), "--stats-log-level", "NOTICE", "--use-json-log");
 
         String[] env = getRcloneEnv();
         try {
