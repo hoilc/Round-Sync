@@ -16,6 +16,7 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Base64;
@@ -847,19 +848,25 @@ public class FileExplorerFragment extends Fragment implements   FileExplorerRecy
         view.findViewById(R.id.new_folder).setOnClickListener(v -> onCreateNewDirectory());
 
         ((EditText)searchBar.findViewById(R.id.search_field)).addTextChangedListener(new TextWatcher() {
+            private final Handler searchHandler = new Handler();
+            private Runnable searchRunnable;
+
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
             }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                searchDirContent(s.toString());
+                if (searchRunnable != null) {
+                    searchHandler.removeCallbacks(searchRunnable);
+                }
+                final String query = s.toString();
+                searchRunnable = () -> searchDirContent(query);
+                searchHandler.postDelayed(searchRunnable, 300);
             }
 
             @Override
             public void afterTextChanged(Editable s) {
-
             }
         });
     }
@@ -879,9 +886,10 @@ public class FileExplorerFragment extends Fragment implements   FileExplorerRecy
             }
         }
 
+        String searchLower = search.toLowerCase();
         for (FileItem item : content) {
             String fileName = item.getName().toLowerCase();
-            if (fileName.contains(search.toLowerCase())) {
+            if (fileName.contains(searchLower)) {
                 results.add(item);
             }
         }
