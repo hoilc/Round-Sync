@@ -363,6 +363,15 @@ public class FileExplorerRecyclerViewAdapter extends RecyclerView.Adapter<FileEx
             files.add(index, fileItem);
             notifyItemInserted(index);
         }
+
+        if (files.size() == data.size()) {
+            for (int i = 0; i < data.size(); i++) {
+                if (!data.get(i).equals(files.get(i))) {
+                    newData(data);
+                    return;
+                }
+            }
+        }
     }
 
     public void updateSortedData(List<FileItem> data) {
