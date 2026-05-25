@@ -84,102 +84,105 @@ class EphemeralWorker (private var mContext: Context, workerParams: WorkerParame
     private val ongoingNotificationID = Random.nextInt()
 
 
+    private var receiverRegistered = false
+
     private var mTitle: String = mNotificationManager?.initialTitle ?: ""
 
     override fun doWork(): Result {
 
         registerBroadcastReceivers()
 
-        updateForegroundNotification(mNotificationManager?.updateNotification(
-            mTitle,
-            mTitle,
-            ArrayList(),
-            0,
-            ongoingNotificationID
-        ))
+        try {
+            updateForegroundNotification(mNotificationManager?.updateNotification(
+                mTitle,
+                mTitle,
+                ArrayList(),
+                0,
+                ongoingNotificationID
+            ))
 
-        if (inputData.keyValueMap.containsKey(EPHEMERAL_TYPE)){
-            val type = Type.valueOf(inputData.getString(EPHEMERAL_TYPE) ?: "")
-            mNotificationManager = prepareNotificationManager(type)
+            if (inputData.keyValueMap.containsKey(EPHEMERAL_TYPE)){
+                val type = Type.valueOf(inputData.getString(EPHEMERAL_TYPE) ?: "")
+                mNotificationManager = prepareNotificationManager(type)
 
-            val remoteItem = getRemoteitemFromParcel(REMOTE)
-            if(remoteItem == null){
-                log("$REMOTE: No valid remote was passed!")
-                return Result.failure()
-            }
-
-            mNotificationManager?.setCancelId(id)
-            if(preconditionsMet()) {
-                // do not instantiate rclone when you dont want it to run.
-                // It will immediately run!
-                when(type){
-                    Type.DOWNLOAD -> {
-                        val target = inputData.getString(DOWNLOAD_TARGETPATH)
-                        val fileItem = getFileitemFromParcel(DOWNLOAD_SOURCE)
-
-                        if(fileItem == null){
-                            log("$DOWNLOAD_SOURCE: No valid target was passed!")
-                            return Result.failure()
-                        }
-
-                        sRcloneProcess = Rclone(mContext).downloadFile(
-                            remoteItem,
-                            fileItem,
-                            target
-                        )
-                    }
-                    Type.UPLOAD -> {
-                        val target = inputData.getString(UPLOAD_TARGETPATH)
-                        val file = inputData.getString(UPLOAD_FILE)
-
-                        sRcloneProcess = Rclone(mContext).uploadFile(
-                            remoteItem,
-                            target,
-                            file
-                        )
-                    }
-                    Type.MOVE -> {
-                        val target = inputData.getString(MOVE_TARGETPATH)
-                        val fileItem = getFileitemFromParcel(MOVE_FILE)
-
-                        if(fileItem == null){
-                            log("$MOVE_FILE: No valid target was passed!")
-                            return Result.failure()
-                        }
-
-                        sRcloneProcess = Rclone(mContext).moveTo(
-                            remoteItem,
-                            fileItem,
-                            target
-                        )
-                    }
-                    Type.DELETE -> {
-                        val fileItem = getFileitemFromParcel(DELETE_FILE)
-
-                        if(fileItem == null){
-                            log("$DELETE_FILE: No valid target was passed!")
-                            return Result.failure()
-                        }
-
-                        sRcloneProcess = Rclone(mContext).deleteItems(
-                            remoteItem,
-                            fileItem
-                        )
-                    }
+                val remoteItem = getRemoteitemFromParcel(REMOTE)
+                if(remoteItem == null){
+                    log("$REMOTE: No valid remote was passed!")
+                    return Result.failure()
                 }
-                handleSync(mTitle)
-            } else {
-                log("Preconditions are not met!")
-                postSync()
-                return Result.failure()
-            }
 
-            postSync()
-            // Indicate whether the work finished successfully with the Result
-            return Result.success()
+                mNotificationManager?.setCancelId(id)
+                if(preconditionsMet()) {
+                    when(type){
+                        Type.DOWNLOAD -> {
+                            val target = inputData.getString(DOWNLOAD_TARGETPATH)
+                            val fileItem = getFileitemFromParcel(DOWNLOAD_SOURCE)
+
+                            if(fileItem == null){
+                                log("$DOWNLOAD_SOURCE: No valid target was passed!")
+                                return Result.failure()
+                            }
+
+                            sRcloneProcess = Rclone(mContext).downloadFile(
+                                remoteItem,
+                                fileItem,
+                                target
+                            )
+                        }
+                        Type.UPLOAD -> {
+                            val target = inputData.getString(UPLOAD_TARGETPATH)
+                            val file = inputData.getString(UPLOAD_FILE)
+
+                            sRcloneProcess = Rclone(mContext).uploadFile(
+                                remoteItem,
+                                target,
+                                file
+                            )
+                        }
+                        Type.MOVE -> {
+                            val target = inputData.getString(MOVE_TARGETPATH)
+                            val fileItem = getFileitemFromParcel(MOVE_FILE)
+
+                            if(fileItem == null){
+                                log("$MOVE_FILE: No valid target was passed!")
+                                return Result.failure()
+                            }
+
+                            sRcloneProcess = Rclone(mContext).moveTo(
+                                remoteItem,
+                                fileItem,
+                                target
+                            )
+                        }
+                        Type.DELETE -> {
+                            val fileItem = getFileitemFromParcel(DELETE_FILE)
+
+                            if(fileItem == null){
+                                log("$DELETE_FILE: No valid target was passed!")
+                                return Result.failure()
+                            }
+
+                            sRcloneProcess = Rclone(mContext).deleteItems(
+                                remoteItem,
+                                fileItem
+                            )
+                        }
+                    }
+                    handleSync(mTitle)
+                } else {
+                    log("Preconditions are not met!")
+                    postSync()
+                    return Result.failure()
+                }
+
+                postSync()
+                return Result.success()
+            }
+            log("Critical: No valid ephemeral type passed!")
+            return Result.failure()
+        } finally {
+            unregisterBroadcastReceivers()
         }
-        log("Critical: No valid ephemeral type passed!")
-        return Result.failure()
     }
 
     override fun onStopped() {
@@ -192,7 +195,7 @@ class EphemeralWorker (private var mContext: Context, workerParams: WorkerParame
 
     private fun finishWork() {
         sRcloneProcess?.destroy()
-        mContext.unregisterReceiver(connectivityChangeBroadcastReceiver)
+        unregisterBroadcastReceivers()
         postSync()
     }
 
@@ -413,6 +416,14 @@ class EphemeralWorker (private var mContext: Context, workerParams: WorkerParame
         val intentFilter = IntentFilter()
         intentFilter.addAction(WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION)
         mContext.registerReceiver(connectivityChangeBroadcastReceiver, intentFilter)
+        receiverRegistered = true
+    }
+
+    private fun unregisterBroadcastReceivers() {
+        if (receiverRegistered) {
+            receiverRegistered = false
+            mContext.unregisterReceiver(connectivityChangeBroadcastReceiver)
+        }
     }
 
     private val connectivityChangeBroadcastReceiver: BroadcastReceiver =

@@ -92,50 +92,55 @@ class SyncWorker (private var mContext: Context, workerParams: WorkerParameters)
 
 
 
+    private var receiverRegistered = false
+
     override fun doWork(): Result {
 
         prepareNotifications()
         registerBroadcastReceivers()
 
-        updateForegroundNotification(mNotificationManager.updateSyncNotification(
-            mTitle,
-            mTitle,
-            ArrayList(),
-            0,
-            ongoingNotificationID
-        ))
+        try {
+            updateForegroundNotification(mNotificationManager.updateSyncNotification(
+                mTitle,
+                mTitle,
+                ArrayList(),
+                0,
+                ongoingNotificationID
+            ))
 
 
-        var ephemeralTask: Task? = null
+            var ephemeralTask: Task? = null
 
-        if(inputData.keyValueMap.containsKey(TASK_ID)){
-            val id = inputData.getLong(TASK_ID, -1)
-            ephemeralTask = mDatabase.getTask(id)
-        }
+            if(inputData.keyValueMap.containsKey(TASK_ID)){
+                val id = inputData.getLong(TASK_ID, -1)
+                ephemeralTask = mDatabase.getTask(id)
+            }
 
-        if(inputData.keyValueMap.containsKey(TASK_EPHEMERAL)){
-            val taskString = inputData.getString(TASK_EPHEMERAL) ?: ""
-            if(taskString.isNotEmpty()) {
-                try {
-                    ephemeralTask = Json.decodeFromString<Task>(taskString)
-                } catch (e: Exception) {
-                    log("Could not deserialize")
+            if(inputData.keyValueMap.containsKey(TASK_EPHEMERAL)){
+                val taskString = inputData.getString(TASK_EPHEMERAL) ?: ""
+                if(taskString.isNotEmpty()) {
+                    try {
+                        ephemeralTask = Json.decodeFromString<Task>(taskString)
+                    } catch (e: Exception) {
+                        log("Could not deserialize")
+                    }
                 }
             }
-        }
 
-        if (ephemeralTask != null) {
-            mTask = ephemeralTask
-            try { Thread.sleep(5000) } catch (_: InterruptedException) {}
-            handleTask()
-            postSync()
-        } else {
-            postSync()
-            return Result.failure()
-        }
+            if (ephemeralTask != null) {
+                mTask = ephemeralTask
+                try { Thread.sleep(5000) } catch (_: InterruptedException) {}
+                handleTask()
+                postSync()
+            } else {
+                postSync()
+                return Result.failure()
+            }
 
-        // Indicate whether the work finished successfully with the Result
-        return Result.success()
+            return Result.success()
+        } finally {
+            unregisterBroadcastReceivers()
+        }
     }
 
     override fun onStopped() {
@@ -148,7 +153,7 @@ class SyncWorker (private var mContext: Context, workerParams: WorkerParameters)
 
     private fun finishWork() {
         sRcloneProcess?.destroy()
-        mContext.unregisterReceiver(connectivityChangeBroadcastReceiver)
+        unregisterBroadcastReceivers()
         postSync()
     }
 
@@ -435,6 +440,14 @@ class SyncWorker (private var mContext: Context, workerParams: WorkerParameters)
         val intentFilter = IntentFilter()
         intentFilter.addAction(WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION)
         mContext.registerReceiver(connectivityChangeBroadcastReceiver, intentFilter)
+        receiverRegistered = true
+    }
+
+    private fun unregisterBroadcastReceivers() {
+        if (receiverRegistered) {
+            receiverRegistered = false
+            mContext.unregisterReceiver(connectivityChangeBroadcastReceiver)
+        }
     }
 
     private val connectivityChangeBroadcastReceiver: BroadcastReceiver =
