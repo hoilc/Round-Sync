@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
 import android.net.wifi.WifiManager
+import android.os.SystemClock
 import androidx.annotation.StringRes
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.preference.PreferenceManager
@@ -129,7 +130,7 @@ class SyncWorker (private var mContext: Context, workerParams: WorkerParameters)
 
             if (ephemeralTask != null) {
                 mTask = ephemeralTask
-                try { Thread.sleep(5000) } catch (_: InterruptedException) {}
+                delayIfProcessJustStarted()
                 handleTask()
                 postSync()
             } else {
@@ -140,6 +141,12 @@ class SyncWorker (private var mContext: Context, workerParams: WorkerParameters)
             return Result.success()
         } finally {
             unregisterBroadcastReceivers()
+        }
+    }
+
+    private fun delayIfProcessJustStarted() {
+        if (SystemClock.uptimeMillis() < 10_000) {
+            try { Thread.sleep(5000) } catch (_: InterruptedException) {}
         }
     }
 
