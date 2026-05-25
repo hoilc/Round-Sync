@@ -63,6 +63,7 @@ public class Rclone {
 
     private static final String TAG = "Rclone";
     private static final long REMOTES_CACHE_TTL_MS = 10_000;
+    private static final Object REMOTES_CACHE_LOCK = new Object();
     private static List<RemoteItem> sCachedRemotes;
     private static long sCacheTimestamp = 0;
     public static final int SYNC_DIRECTION_LOCAL_TO_REMOTE = 1;
@@ -347,8 +348,10 @@ public class Rclone {
     }
 
     public static void invalidateRemotesCache() {
-        sCachedRemotes = null;
-        sCacheTimestamp = 0;
+        synchronized (REMOTES_CACHE_LOCK) {
+            sCachedRemotes = null;
+            sCacheTimestamp = 0;
+        }
     }
 
     private static RemoteItem copyRemoteItem(RemoteItem remoteItem) {
@@ -376,8 +379,14 @@ public class Rclone {
         Set<String> pinnedRemotes = sharedPreferences.getStringSet(context.getString(R.string.shared_preferences_pinned_remotes), new HashSet<>());
         Set<String> favoriteRemotes = sharedPreferences.getStringSet(context.getString(R.string.shared_preferences_drawer_pinned_remotes), new HashSet<>());
 
-        if (sCachedRemotes != null && (now - sCacheTimestamp) < REMOTES_CACHE_TTL_MS) {
-            List<RemoteItem> result = copyRemoteItems(sCachedRemotes);
+        List<RemoteItem> cachedRemotes = null;
+        synchronized (REMOTES_CACHE_LOCK) {
+            if (sCachedRemotes != null && (now - sCacheTimestamp) < REMOTES_CACHE_TTL_MS) {
+                cachedRemotes = copyRemoteItems(sCachedRemotes);
+            }
+        }
+        if (cachedRemotes != null) {
+            List<RemoteItem> result = cachedRemotes;
             for (RemoteItem item : result) {
                 item.pin(pinnedRemotes.contains(item.getName()));
                 item.setDrawerPinned(favoriteRemotes.contains(item.getName()));
@@ -455,8 +464,10 @@ public class Rclone {
             }
         }
 
-        sCachedRemotes = copyRemoteItems(remoteItemList);
-        sCacheTimestamp = System.currentTimeMillis();
+        synchronized (REMOTES_CACHE_LOCK) {
+            sCachedRemotes = copyRemoteItems(remoteItemList);
+            sCacheTimestamp = System.currentTimeMillis();
+        }
         return remoteItemList;
     }
 
